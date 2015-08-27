@@ -11,7 +11,6 @@ class Cow:
 
     def say(self, message, options={}):
         command = "cowsay"
-        print "strings" in options and "eyes" in options["strings"]
         if "strings" in options and "eyes" in options["strings"]:
             command += " -e '{}'".format(options["strings"]["eyes"])
 
