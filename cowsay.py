@@ -34,10 +34,10 @@ class Cow:
                 self.last_status_code = process.wait()
             except IOError:
                 results.append(message)
-
         output = "\n".join(results)
-        if "out" in options:
-            options["out"] += output
+
+        if isinstance(options.get("out"), file):
+            options["out"].write(output)
 
         if isinstance(options.get("out"), file):
             destination = os.path.abspath(options["out"].name)
