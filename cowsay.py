@@ -43,8 +43,8 @@ class Cow:
             destination = os.path.abspath(options["out"].name)
         else:
             destination = "return value"
-
         self.logger.info("Wrote to {}".format(destination))
+
         if self.last_status_code and 0 <= self.last_status_code <= 172:
             raise ValueError("Command exited with status {}".format(self.last_status_code))
 
