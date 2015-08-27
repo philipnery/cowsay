@@ -36,7 +36,7 @@ class Cow:
                 results.append(message)
         output = "\n".join(results)
 
-        if isinstance(options.get("out"), file):
+        if "out" in options:
             options["out"].write(output)
 
         if isinstance(options.get("out"), file):
