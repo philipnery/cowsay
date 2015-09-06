@@ -1,8 +1,9 @@
+import contextlib
 import shlex
 from subprocess import Popen, PIPE
 
 
-class NoneObject(object):
+class NullObject(object):
     def __init__(self, *args, **kwargs):
         pass
 
@@ -10,7 +11,7 @@ class NoneObject(object):
         return ""
 
     def __repr__(self):
-        return "NoneObject"
+        return "NullObject"
 
     def __call__(self, *args, **kwargs):
         return self
@@ -33,7 +34,7 @@ class NoneObject(object):
 
 def Maybe(value):
     if value is None:
-        return NoneObject()
+        return NullObject()
     else:
         return value
 
@@ -63,8 +64,9 @@ def to_file(obj):
 
 
 class Cow:
-    def __init__(self, logger=NoneObject()):
+    def __init__(self, logger=NullObject()):
         self.logger = logger
+        self.status_code = 0
 
     def say(self, message, options={}):
         width = options.get("width", 40)
@@ -76,46 +78,32 @@ class Cow:
         command += " -W {}".format(width)
         command += " -e '{}'".format(eyes) if eyes else ""
 
-        results = self.process_messages(messages, command)
-        output = "\n".join(results)
-
-        out.write(output)
-
-        self.logger.info("Wrote to {}".format(destination))
-
-        return output
-
-    def process_messages(self, messages, command):
         results = []
         for message in messages:
-            process = Popen(shlex.split(command), stdin=PIPE, stdout=PIPE)
-            try:
+            with self.checked_popen(shlex.split(command), stdin=PIPE, stdout=PIPE) as process:
                 process.stdin.write(message)
                 process.stdin.close()
 
                 result = process.stdout.read()
                 results.append(result)
+        output = "\n".join(results)
+        out.write(output)
 
-                status_code = process.wait()
+        self.logger.info("Wrote to {}".format(destination))
+        return output
 
-                if status_code and 0 <= status_code <= 172:
-                    raise ValueError("Command exited with status {}".format(status_code))
-            except IOError:
-                results.append(message)
-        return results
+    @contextlib.contextmanager
+    def check_for_child_exit_status(self):
+        yield
+        if self.status_code > 172:
+            raise ValueError("Command exited with status {}".format(self.status_code))
 
-    def process_message(self, message, command):
-        process = Popen(shlex.split(command), stdin=PIPE, stdout=PIPE)
-        try:
-            process.stdin.write(message)
-            process.stdin.close()
-
-            result = process.stdout.read()
-            results.append(result)
-
-            status_code = process.wait()
-
-            if status_code and 0 <= status_code <= 172:
-                raise ValueError("Command exited with status {}".format(status_code))
-        except IOError:
-            results.append(message)
+    @contextlib.contextmanager
+    def checked_popen(self, *args, **kwargs):
+        with self.check_for_child_exit_status():
+            process = Popen(*args, **kwargs)
+            try:
+                yield process
+                self.status_code = process.wait()
+            except OSError:
+                pass

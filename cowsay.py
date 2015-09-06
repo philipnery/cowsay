@@ -7,7 +7,7 @@ from subprocess import Popen, PIPE
 class Cow:
     def __init__(self, options={}):
         self.logger = options.get("logger", logging.getLogger(__name__))
-        self.last_status_code = None
+        self.status_code = 0
 
     def say(self, message, options={}):
         command = "cowsay"
@@ -31,9 +31,9 @@ class Cow:
                 result = process.stdout.read()
                 results.append(result)
 
-                self.last_status_code = process.wait()
-            except IOError:
-                results.append(message)
+                self.status_code = process.wait()
+            except OSError:
+                pass
         output = "\n".join(results)
 
         if "out" in options:
@@ -45,7 +45,7 @@ class Cow:
             destination = "return value"
         self.logger.info("Wrote to {}".format(destination))
 
-        if self.last_status_code and 0 <= self.last_status_code <= 172:
-            raise ValueError("Command exited with status {}".format(self.last_status_code))
+        if self.status_code > 172:
+            raise ValueError("Command exited with status {}".format(self.status_code))
 
         return output
