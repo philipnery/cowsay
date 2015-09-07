@@ -4,7 +4,7 @@ import shlex
 from subprocess import Popen, PIPE
 
 
-class Cow:
+class Cow(object):
     def __init__(self, options={}):
         self.logger = options.get("logger", logging.getLogger(__name__))
         self.status_code = 0
@@ -45,7 +45,7 @@ class Cow:
             destination = "return value"
         self.logger.info("Wrote to {}".format(destination))
 
-        if self.status_code > 172:
+        if self.status_code < 0 or self.status_code > 172:
             raise ValueError("Command exited with status {}".format(self.status_code))
 
         return output

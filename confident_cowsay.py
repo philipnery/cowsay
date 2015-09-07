@@ -39,7 +39,7 @@ def Maybe(value):
         return value
 
 
-class NullSink:
+class NullSink(object):
     def __init__(self, *args, **kwargs):
         pass
 
@@ -63,7 +63,7 @@ def to_file(obj):
         return NullSink()
 
 
-class Cow:
+class Cow(object):
     def __init__(self, logger=NullObject()):
         self.logger = logger
         self.status_code = 0
@@ -95,7 +95,7 @@ class Cow:
     @contextlib.contextmanager
     def check_for_child_exit_status(self):
         yield
-        if self.status_code > 172:
+        if self.status_code < 0 or self.status_code > 172:
             raise ValueError("Command exited with status {}".format(self.status_code))
 
     @contextlib.contextmanager
